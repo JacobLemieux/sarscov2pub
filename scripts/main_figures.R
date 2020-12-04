@@ -1,7 +1,8 @@
 ### Generate Main Figures 
 # May 18 2020
-# Updated July 12 2020
-# Jacob E. Lemieux
+# Updated November 2020
+# lemieux@broadinstitute.org
+# figure references correspond to original medrxiv submission (lemieux et al 2020, medrxiv)
 
 # load packages
 library(ggplot2)
@@ -29,21 +30,19 @@ library(webshot)
 library(choroplethr)
 library(choroplethrMaps)
 
-setwd("~/Dropbox/COVID/SARS-CoV-2/")
+setwd("COVID/SARS-CoV-2/")
 source("scripts/SARS-CoV-2_functions.R")
 
 ###################################
 # Set local SARS-CoV-2 directory 
 ###################################
 
-Sys.setenv("PATH" = paste(Sys.getenv("PATH"), "/opt/anaconda3/bin:/opt/anaconda3/condabin:/Users/jy17/bin/google-cloud-sdk/bin:/Users/lemieux/google-cloud-sdk/bin:/Users/lemieux/anaconda2/bin:/usr/local/bin::/Users/lemieux/anaconda2/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:", sep=":"))
-
 ###################################
 # Compute or load some metadata
 ###################################
 
 #system("pangolin data/sequences_and_trees/concatenated_unaligned.fasta -t 10 -p -o data/metadata --outfile Pangolin_lineage_report.csv")
-system("ln -s -f ~/Dropbox/COVID/SARS-CoV-2/data/sequences_and_trees/mafft_aligned.fasta data/popgenome/mafft_aligned.fasta")
+#system("ln -s -f COVID/SARS-CoV-2/data/sequences_and_trees/mafft_aligned.fasta data/popgenome/mafft_aligned.fasta")
 
 ###################################
 # Read in datasets
@@ -135,11 +134,11 @@ root_to_tip <- read_tsv("data/sequences_and_trees/root-to-tip_trimmed_alignment_
 
 # Read in nextstrain tree and metadata
 #nextstrain_tree <- read.newick("data/sequences_and_trees/all_samples_aligned.fasta_aligned.filtered.masked_timetree.nwk")
-nextstrain_tree <- read.newick("~/Dropbox/COVID/2020_08_07/nextstrain/all_samples_aligned.fasta_aligned.filtered.masked_timetree.nwk")
+nextstrain_tree <- read.newick("COVID/2020_08_07/nextstrain/all_samples_aligned.fasta_aligned.filtered.masked_timetree.nwk")
 #nextstrain_mltree <- read.newick("data/sequences_and_trees/all_samples_aligned.fasta_aligned.filtered.masked_iqtree.nwk")
-nextstrain_mltree <- read.newick("~/Dropbox/COVID/2020_08_07/nextstrain/all_samples_aligned.fasta_aligned.filtered.masked_iqtree.nwk")
+nextstrain_mltree <- read.newick("COVID/2020_08_07/nextstrain/all_samples_aligned.fasta_aligned.filtered.masked_iqtree.nwk")
 #nextstrain_metadata <- read_tsv("data/metadata/output_gisaid_v2.tsv", col_types = cols(.default = "c")) # nextstrain metadata
-nextstrain_metadata <- read_tsv("~/Dropbox/COVID/2020_08_07/nextstrain/output_gisaid_v3.tsv", col_types = cols(.default = "c")) # nextstrain metadata
+nextstrain_metadata <- read_tsv("COVID/2020_08_07/nextstrain/output_gisaid_v3.tsv", col_types = cols(.default = "c")) # nextstrain metadata
 
 # clean up nextstrain tree metadata
 nextstrain_metadata$exposure <- rep(NA, nrow(nextstrain_metadata))
@@ -248,7 +247,7 @@ ggsave("data/figures/F1B.pdf", width = 5, height = 5)
 ggsave("data/figures/F1B.jpg", width = 5, height = 5)
 
 # new figure 1C
-test_data <- read_csv("~/Data_and_Projects/COVID/COVID_Cumulative_Results_8_4_2020.csv", skip = 1)
+test_data <- read_csv("COVID/COVID_Cumulative_Results_8_4_2020.csv", skip = 1)
 test_data$`Collect Date` <- as_date(mdy(test_data$`Collect Date`))
 test_data$Birthdate <- as_date(mdy(test_data$`Birthdate`))
 test_data <- test_data %>% filter(!is.na(Birthdate))
@@ -298,7 +297,7 @@ ggsave("data/figures/F1C.jpg",width=5,height=5)
 
 # Plot zip code choropleths
 
-dem_data <- read_delim("~/Data_and_Projects/COVID/JY175_061220130343720223_MGH_Dem.txt", delim="|", col_types = cols(.default = "c"))
+dem_data <- read_delim("COVID/061220130343720223.txt", delim="|", col_types = cols(.default = "c"))
 
 # create df of zip code count data
 #zip_df <- data.frame(table(dem_data$Zip_code))
@@ -560,7 +559,7 @@ ggsave("data/figures/F2B.jpg", height = 5, width = 5)
 #beast <- read.beast("data/sequences_and_trees/MCC.tree") # MCC tree from BEAST
 beast <- read.beast("data/sequences_and_trees/MCC_GTR4_2020_08_07.tree")
 #mcmc_trace <- readLog("data/sequences_and_trees/trimmed_alignment_with_clades.log", burnin = 0.3) # BEAST log file
-mcmc_trace <- readLog("~/Dropbox/COVID/2020_08_07/BEAST/GTRG4_coal_exp_pop/trimmed_alignment_with_clades.log", burnin = 0.3)
+mcmc_trace <- readLog("COVID/2020_08_07/BEAST/GTRG4_coal_exp_pop/trimmed_alignment_with_clades.log", burnin = 0.3)
 mcmc_df <- data.frame(mcmc_trace)
 mcmc_df$iteration <- rownames(mcmc_df)
 
@@ -751,7 +750,7 @@ ggsave("data/figures/S1.jpg")
 
 # Supplemental Figure 2
 
-RC_clean <- read_csv("~/Dropbox/COVID/SARS-CoV-2/data/metadata/cobas_ct_by_sample.csv")
+RC_clean <- read_csv("COVID/SARS-CoV-2/data/metadata/cobas_ct_by_sample.csv")
 RC_clean$ViralCT[RC_clean$ViralCT == 45] <- NA
 RC_clean <- left_join(RC_clean, sample_set[,c("sample_id", "assembly_mean_coverage")])
 
@@ -920,7 +919,7 @@ system("iqtree -s data/sequences_and_trees/merged_mafft_aligned.fasta -bb 10000 
 
 
 #DPH_combined_tree <- read.newick("data/sequences_and_trees/DPH_combined.tree")
-DPH_combined_tree <- read.iqtree("~/Dropbox/COVID/2020_07_06/alignments/combined.fasta.contree")
+DPH_combined_tree <- read.iqtree("COVID/2020_07_06/alignments/combined.fasta.contree")
 #DPH_combined_tree <- read.iqtree("data/sequences_and_trees/merged_mafft_aligned.fasta.contree")
 DPH_combined_tree@phylo <- midpoint.root(DPH_combined_tree@phylo)
 
@@ -1645,8 +1644,8 @@ ggsave("data_revision/figures2/S13.jpg", height = 10, width = 8)
 # Compare different substition models in BEAST
 
 #beast_model2 <- read.beast("data/sequences_and_trees/MCC.tree") # MCC tree from BEAST
-#mcmc_trace2 <- readLog("~/Dropbox/COVID/2020_07_13/coal_exp_prior_HKY_G4/trimmed_alignment_with_clades.log", burnin = 0.3) # BEAST log file
-mcmc_trace2 <- readLog("~/Dropbox/COVID/2020_08_11/BEAST/HKY_G4_coal_exp_prior_2/trimmed_alignment_with_clades.log", burnin = 0.3)
+#mcmc_trace2 <- readLog("COVID/2020_07_13/coal_exp_prior_HKY_G4/trimmed_alignment_with_clades.log", burnin = 0.3) # BEAST log file
+mcmc_trace2 <- readLog("COVID/2020_08_11/BEAST/HKY_G4_coal_exp_prior_2/trimmed_alignment_with_clades.log", burnin = 0.3)
 mcmc_df2 <- data.frame(mcmc_trace2)
 mcmc_df2$iteration <- rownames(mcmc_df2)
 

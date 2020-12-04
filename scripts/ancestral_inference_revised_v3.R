@@ -1,6 +1,6 @@
 ### Ancestral inference, revised with updated gisaid sampling
 # November 17 2020
-# Jacob E. Lemieux
+# lemieux@broadinstitute.org
 
 library(devtools)
 library(tidyverse)
@@ -20,9 +20,8 @@ library(lubridate)
 library(DescTools)
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
 
-setwd("~/Dropbox/COVID/SARS-CoV-2/")
-source("scripts/SARS-CoV-2_functions.R")
-Sys.setenv("PATH" = paste(Sys.getenv("PATH"), "/opt/anaconda3/bin:/opt/anaconda3/condabin:/Users/jy17/bin/google-cloud-sdk/bin:/Users/lemieux/google-cloud-sdk/bin:/Users/lemieux/anaconda2/bin:/usr/local/bin::/Users/lemieux/anaconda2/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:", sep=":"))
+#setwd("COVID/SARS-CoV-2/")
+#source("scripts/SARS-CoV-2_functions.R")
 
 # Read in set of nextstrain trees
 # samples 154 and 66 failed and were removed from the dataset

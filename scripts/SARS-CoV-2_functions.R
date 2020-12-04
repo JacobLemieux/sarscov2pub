@@ -1,5 +1,5 @@
 ### Functions to manipulate SARS-CoV-2 data
-# June 16 2020
+# Dec 1 2020
 # Jacob E. Lemieux
 
 
@@ -344,3 +344,177 @@ transformProb <- function(prob1){
   }
   prob1  
 }
+
+# simulate time-dependent allele frequencies
+
+simTimeDep2416 <- function(n_sims, var_by_state_df){
+    # set up data structures to store simulation results
+    county_sims <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+    napprox <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+    napprox_epoch1 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+    napprox_epoch2 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+    
+    bb <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+    bb_epoch1 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+    bb_epoch2 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  
+    # loop through states  
+    for(i in 1:nrow(variants_by_state)){
+      mu_hat.epoch1 <- variants_by_state$AF0[i]
+      mu_hat.h.epoch1 <- (variants_by_state$T0[i] + 0.5) / (variants_by_state$alleles_epoch1[i] + 1) #continuity correction
+      sd_hat.epoch1 <- sqrt(mu_hat.h.epoch1*(1-mu_hat.h.epoch1)/(variants_by_state$alleles_epoch1[i]+1))
+      mu_hat.epoch2 <- variants_by_state$AF1[i]
+      mu_hat.h.epoch2 <- (variants_by_state$T1[i] + 0.5) / (variants_by_state$alleles_epoch2[i] + 1) #continuity correction
+      sd_hat.epoch2 <- sqrt(mu_hat.h.epoch2*(1-mu_hat.h.epoch2)/(variants_by_state$alleles_epoch2[i]+1))
+      mu_hat.pooled <- (variants_by_state$T0[i] + variants_by_state$T1[i]) / (variants_by_state$T0[i] + variants_by_state$T1[i] + variants_by_state$C0[i] + variants_by_state$C1[i])
+      mu_hat.h.pooled <- (variants_by_state$T0[i] + variants_by_state$T1[i] + 0.5) / (variants_by_state$T0[i] + variants_by_state$T1[i] + variants_by_state$C0[i] + variants_by_state$C1[i] + 1)
+      sd_hat.pooled <- sqrt(mu_hat.h.pooled*(1 - mu_hat.h.pooled)/(variants_by_state$alleles_epoch1[i]+ variants_by_state$alleles_epoch2[i]+1))
+      
+      # beta-binomial model
+      alpha.epoch1 <- variants_by_state$T0[i] + 0.5
+      beta.epoch1 <- variants_by_state$C0[i] + 0.5
+      alpha.epoch2 <- variants_by_state$T1[i] + 0.5
+      beta.epoch2 <- variants_by_state$C1[i] + 0.5
+      alpha.pooled <- variants_by_state$T0[i] + variants_by_state$T1[i] + 0.5
+      beta.pooled <- variants_by_state$C0[i] + variants_by_state$C1[i] + 0.5
+      
+      # replace low count epochs with pooled quantity
+      if(variants_by_state$alleles_epoch1[i] < 10){
+        mu_hat.epoch1 <- mu_hat.pooled
+        sd_hat.epoch1 <- sd_hat.pooled
+        alpha.epoch1 <- alpha.pooled
+        beta.epoch1 <- beta.pooled
+      }
+      # replace low count epochs with pooled quantity
+      if(variants_by_state$alleles_epoch2[i] < 10){
+        mu_hat.epoch2 <- mu_hat.pooled
+        sd_hat.epoch2 <- sd_hat.pooled
+        alpha.epoch2 <- alpha.pooled
+        beta.epoch2 <- beta.pooled
+      }
+      
+      # conduct the simulation
+      napprox_epoch1[,i] <- rtnorm(n_sims, mu_hat.epoch1,sd_hat.epoch1, lower = 0, upper = 1) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases_epoch1[i]
+      napprox_epoch2[,i] <- rtnorm(n_sims, mu_hat.epoch2,sd_hat.epoch2, lower = 0, upper = 1) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases_epoch2[i]
+      napprox[,i] <- napprox_epoch1[,i] + napprox_epoch2[,i]
+      bb_epoch1[,i] <- rbeta(n_sims, alpha.epoch1,beta.epoch1) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases_epoch1[i]
+      bb_epoch2[,i] <- rbeta(n_sims, alpha.epoch2,beta.epoch2) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases_epoch2[i]
+      bb[,i] <- bb_epoch1[,i] + bb_epoch2[,i]
+  }
+  result_list <- list(na1 = napprox_epoch1, na2 = napprox_epoch2, na0 = napprox, bb1 = bb_epoch1, bb2 = bb_epoch2, bb0 = bb)
+  result_list
+}
+
+simTimeDep26233 <- function(n_sims, var_by_state_df){
+  # set up data structures to store simulation results
+  county_sims <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  napprox <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  napprox_epoch1 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  napprox_epoch2 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  
+  bb <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  bb_epoch1 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  bb_epoch2 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  
+  # loop through states  
+  for(i in 1:nrow(variants_by_state)){
+    mu_hat.epoch1 <- variants_by_state$AF0[i]
+    mu_hat.h.epoch1 <- (variants_by_state$T0[i] + 0.5) / (variants_by_state$alleles_epoch1[i] + 1) #continuity correction
+    sd_hat.epoch1 <- sqrt(mu_hat.h.epoch1*(1-mu_hat.h.epoch1)/(variants_by_state$alleles_epoch1[i]+1))
+    mu_hat.epoch2 <- variants_by_state$AF1[i]
+    mu_hat.h.epoch2 <- (variants_by_state$T1[i] + 0.5) / (variants_by_state$alleles_epoch2[i] + 1) #continuity correction
+    sd_hat.epoch2 <- sqrt(mu_hat.h.epoch2*(1-mu_hat.h.epoch2)/(variants_by_state$alleles_epoch2[i]+1))
+    mu_hat.pooled <- (variants_by_state$T0[i] + variants_by_state$T1[i]) / (variants_by_state$T0[i] + variants_by_state$T1[i] + variants_by_state$G0[i] + variants_by_state$G1[i])
+    mu_hat.h.pooled <- (variants_by_state$T0[i] + variants_by_state$T1[i] + 0.5) / (variants_by_state$T0[i] + variants_by_state$T1[i] + variants_by_state$G0[i] + variants_by_state$G1[i] + 1)
+    sd_hat.pooled <- sqrt(mu_hat.h.pooled*(1 - mu_hat.h.pooled)/(variants_by_state$alleles_epoch1[i]+ variants_by_state$alleles_epoch2[i]+1))
+    
+    # beta-binomial model
+    alpha.epoch1 <- variants_by_state$T0[i] + 0.5
+    beta.epoch1 <- variants_by_state$G0[i] + 0.5
+    alpha.epoch2 <- variants_by_state$T1[i] + 0.5
+    beta.epoch2 <- variants_by_state$G1[i] + 0.5
+    alpha.pooled <- variants_by_state$T0[i] + variants_by_state$T1[i] + 0.5
+    beta.pooled <- variants_by_state$G0[i] + variants_by_state$G1[i] + 0.5
+    
+    # replace low count epochs with pooled quantity
+    if(variants_by_state$alleles_epoch1[i] < 10){
+      mu_hat.epoch1 <- mu_hat.pooled
+      sd_hat.epoch1 <- sd_hat.pooled
+      alpha.epoch1 <- alpha.pooled
+      beta.epoch1 <- beta.pooled
+    }
+    # replace low count epochs with pooled quantity
+    if(variants_by_state$alleles_epoch2[i] < 10){
+      mu_hat.epoch2 <- mu_hat.pooled
+      sd_hat.epoch2 <- sd_hat.pooled
+      alpha.epoch2 <- alpha.pooled
+      beta.epoch2 <- beta.pooled
+    }
+    
+    # conduct the simulation
+    napprox_epoch1[,i] <- rtnorm(n_sims, mu_hat.epoch1,sd_hat.epoch1, lower = 0, upper = 1) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases_epoch1[i]
+    napprox_epoch2[,i] <- rtnorm(n_sims, mu_hat.epoch2,sd_hat.epoch2, lower = 0, upper = 1) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases_epoch2[i]
+    napprox[,i] <- napprox_epoch1[,i] + napprox_epoch2[,i]
+    bb_epoch1[,i] <- rbeta(n_sims, alpha.epoch1,beta.epoch1) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases_epoch1[i]
+    bb_epoch2[,i] <- rbeta(n_sims, alpha.epoch2,beta.epoch2) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases_epoch2[i]
+    bb[,i] <- bb_epoch1[,i] + bb_epoch2[,i]
+  }
+  result_list <- list(na1 = napprox_epoch1, na2 = napprox_epoch2, na0 = napprox, bb1 = bb_epoch1, bb2 = bb_epoch2, bb0 = bb)
+  result_list
+}
+
+# 2416 non time-dependent simulation 
+
+sim2416 <- function(n_sims, variants_by_state){
+  # set up data structures to store results of simulation
+  napprox <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  napprox_robust1 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  napprox_robust2 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  bb <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  
+  # conduct simulation
+  for(i in 1:nrow(variants_by_state)){
+    # beta-binomial model
+    alpha.epoch <- variants_by_state$T[i] + 0.5
+    beta.epoch <- variants_by_state$C[i] + 0.5
+    bb[,i] <- rbeta(n_sims, alpha.epoch,beta.epoch) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases[i]
+    
+    # normal-approximation model
+    mu_hat <- variants_by_state$AF[i]
+    mu_hat.h <- (variants_by_state$T[i] + 0.5) / (variants_by_state$alleles[i] + 1)
+    sd_hat <- sqrt((mu_hat.h*(1-mu_hat.h))/(variants_by_state$alleles[i] + 1))
+    napprox[,i] <- rtnorm(n_sims, mu_hat,sd_hat, lower = 0, upper = 1)  * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases[i]
+    napprox_robust1[,i] <- rtnorm(n_sims, mu_hat,2*sd_hat, lower = 0, upper = 1) *rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases[i]
+    napprox_robust2[,i] <- rtnorm(n_sims, mu_hat,3*sd_hat, lower = 0, upper = 1) *rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases[i]
+  }
+  result_list <- list(na0 = napprox, nar1 = napprox_robust1, nar2 = napprox_robust2, bb0 = bb)
+  result_list
+}
+
+# 26233 non time-dependent
+
+sim26233 <- function(n_sims, variants_by_state){
+  # set up data structures to store results of simulation
+  napprox <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  napprox_robust1 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  napprox_robust2 <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  bb <- matrix(rep(NA, n_sims*nrow(variants_by_state)), nrow = n_sims)
+  
+  for(i in 1:nrow(variants_by_state)){
+    # beta-binomial model
+    alpha.epoch <- variants_by_state$T[i] + 0.5
+    beta.epoch <- variants_by_state$G[i] + 0.5
+    bb[,i] <- rbeta(n_sims, alpha.epoch,beta.epoch) * rtnorm(n_sims, 0.9, 0.05, lower = 0, upper = 1) * variants_by_state$cases[i]
+    
+    # normal-approximation model
+    mu_hat <- variants_by_state$AF[i]
+    mu_hat.h <- (variants_by_state$T[i] + 0.5) / (variants_by_state$alleles[i] + 1)
+    sd_hat <- sqrt((mu_hat.h*(1-mu_hat.h))/(variants_by_state$alleles[i] + 1))
+    napprox[,i] <- rtnorm(n_sims, mu_hat,sd_hat, lower = 0, upper = 1) * variants_by_state$cases[i]
+    napprox_robust1[,i] <- rtnorm(n_sims, mu_hat,2*sd_hat, lower = 0, upper = 1) * variants_by_state$cases[i]
+    napprox_robust2[,i] <- rtnorm(n_sims, mu_hat,3*sd_hat, lower = 0, upper = 1) * variants_by_state$cases[i]
+  }
+  result_list <- list(na0 = napprox, nar1 = napprox_robust1, nar2 = napprox_robust2, bb0 = bb)
+  result_list
+}
+
