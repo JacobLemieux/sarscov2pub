@@ -1,0 +1,1 @@
+Sequence data from gisaid cannot be directly hosted here due to the GISAID DAA. The sequence data from this study can be obtained through terra and/or genbank. Please see gisaid.org to obtain global sequence files. 
